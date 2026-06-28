@@ -28,11 +28,14 @@ async function readData() {
 async function main() {
   const data = await readData();
   const groups = Object.keys(data);
-  const columns = Object.keys(data[groups[0]]);
-  const rows = Object.keys(data[groups[0]][columns[0]]);
-
 
   for (const group of groups) {
+    // Per-group columns/rows: parsers vary by file (tsv is benched on the `.ts`
+    // file only), so a single column set taken from the first group would drop
+    // tsv or throw on the groups that lack it.
+    const columns = Object.keys(data[group]);
+    const rows = Object.keys(data[group][columns[0]]);
+
     console.log(`### ${group}`);
     console.log()
     const table = [["", ...columns]];

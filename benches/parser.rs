@@ -13,6 +13,12 @@ trait TheBencher {
 
     fn parse(filename: &Path, source: &str) -> Self::ParseOutput;
 
+    /// Whether this parser can handle the given file. Defaults to `true`;
+    /// `TsvBencher` overrides it to skip JSX/TSX, which tsv has no grammar for.
+    fn supports(_path: &Path) -> bool {
+        true
+    }
+
     fn bench(g: &mut BenchmarkGroup<'_, WallTime>, path: &Path, source: &str) {
         let cpus = num_cpus::get_physical();
         let id = BenchmarkId::new(Self::ID, "single-thread");
@@ -72,8 +78,29 @@ impl TheBencher for SwcBencher {
 // }
 // }
 
+struct TsvBencher;
+
+impl TheBencher for TsvBencher {
+    type ParseOutput = bumpalo::Bump;
+
+    const ID: &'static str = "tsv";
+
+    fn parse(_path: &Path, source: &str) -> Self::ParseOutput {
+        bench_parser::tsv::parse(source)
+    }
+
+    /// tsv is benched on real TypeScript (`.ts`) only. It has no JSX grammar
+    /// (`cal.com.tsx`), and its strict TS parser rejects identifiers that
+    /// collide with TS contextual keywords, which the `.js` corpus uses
+    /// (`typescript.js` names a parameter `readonly`) — so `.js` is out too.
+    /// Either would make tsv error mid-parse and look artificially fast.
+    fn supports(path: &Path) -> bool {
+        path.extension().and_then(|e| e.to_str()) == Some("ts")
+    }
+}
+
 fn parser_benchmark(c: &mut Criterion) {
-    let filenames = ["typescript.js", "cal.com.tsx"];
+    let filenames = ["typescript.js", "cal.com.tsx", "parser.ts"];
     for filename in filenames {
         let path = Path::new("files").join(filename);
         let source = std::fs::read_to_string(&path).unwrap();
@@ -81,6 +108,9 @@ fn parser_benchmark(c: &mut Criterion) {
         OxcBencher::bench(&mut g, &path, &source);
         SwcBencher::bench(&mut g, &path, &source);
         // BiomeBencher::bench(&mut g, &path, &source);
+        if TsvBencher::supports(&path) {
+            TsvBencher::bench(&mut g, &path, &source);
+        }
         g.finish();
     }
 }

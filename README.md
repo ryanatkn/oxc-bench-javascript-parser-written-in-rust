@@ -10,6 +10,18 @@ Please note that it is not an apple to apple comparison with Biome.
 Biome's parser [produces a CST](https://biomejs.dev/internals/architecture) instead of an AST,
 which requires a lot more work.
 
+> **This fork adds [tsv](https://github.com/fuzdev/tsv) as a third parser.** tsv
+> is a native-Rust TypeScript/Svelte/CSS formatter; its parser is benched against
+> oxc and swc on a new `files/parser.ts` corpus file (the TypeScript compiler's
+> `src/compiler/parser.ts`, v5.9.2 — real TypeScript). tsv has **no JSX grammar**,
+> so it is excluded from `cal.com.tsx`; it is also excluded from `typescript.js`,
+> whose plain-JS code uses identifiers that collide with TS contextual keywords
+> (`readonly` as a parameter name) and which tsv's strict TS parser rejects.
+> Building the tsv parser requires a sibling checkout of `../tsv` (see
+> [Run benchmark locally](#run-benchmark-locally)). The Mac result tables below
+> are upstream's original oxc/swc/biome numbers (pre-tsv) — regenerate locally to
+> include tsv.
+
 ## CPU
 
 ### Codspeed Measurement
@@ -63,7 +75,14 @@ Codspeed measures performance by cpu instructions.
 
 ### Run benchmark locally
 
-Run the following command on your machine for replication.
+The tsv parser is a `../tsv` path dependency, so first place the tsv repo next to
+this one (it's public):
+
+```bash
+git clone https://github.com/fuzdev/tsv.git ../tsv
+```
+
+Then run the following command on your machine for replication.
 
 ```bash
 cargo bench
@@ -75,6 +94,9 @@ Generate the table
 pnpm i
 pnpm run table
 ```
+
+(tsv only appears in the `parser.ts` group — it has no JSX grammar and is scoped
+to real TypeScript; see the note under [Summary](#summary).)
 
 ## Maximum Resident Set Size
 

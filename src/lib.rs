@@ -22,10 +22,7 @@ pub mod swc {
         let syntax = match path.extension().unwrap().to_str().unwrap() {
             "js" => Syntax::Es(EsSyntax::default()),
             "ts" => Syntax::Typescript(TsSyntax::default()),
-            "tsx" => Syntax::Typescript(TsSyntax {
-                tsx: true,
-                ..TsSyntax::default()
-            }),
+            "tsx" => Syntax::Typescript(TsSyntax { tsx: true, ..TsSyntax::default() }),
             _ => panic!("need to define syntax for swc"),
         };
         let input = StringInput::new(source, BytePos(0), BytePos(source.len() as u32));

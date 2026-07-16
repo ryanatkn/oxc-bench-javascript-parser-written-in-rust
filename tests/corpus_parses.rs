@@ -26,10 +26,6 @@ fn tsv_parses_its_corpus_cleanly() {
         let source = fs::read_to_string(file).unwrap_or_else(|e| panic!("read {file}: {e}"));
         let arena = Bump::new();
         let result = tsv_ts::parse(&source, &arena);
-        assert!(
-            result.is_ok(),
-            "tsv failed to parse {file}: {:?}",
-            result.err()
-        );
+        assert!(result.is_ok(), "tsv failed to parse {file}: {:?}", result.err());
     }
 }
